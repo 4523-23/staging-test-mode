@@ -1,0 +1,225 @@
+{
+  "entities": {
+    "Beat": {
+      "title": "Beat",
+      "description": "An instrumental beat available for preview and licensing on Exvis Beatz.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "minLength": 2, "maxLength": 100 },
+        "genre": {
+          "type": "string",
+          "enum": ["Afrobeats", "Amapiano", "Trap", "Drill", "UK Drill", "Hip-Hop", "R&B", "Dancehall"]
+        },
+        "bpm": { "type": "number" },
+        "musicalKey": { "type": "string", "minLength": 1, "maxLength": 16 },
+        "durationSec": { "type": "number" },
+        "mood": { "type": "string", "minLength": 2, "maxLength": 80 },
+        "coverUrl": { "type": "string", "minLength": 1, "maxLength": 500 },
+        "audioUrl": { "type": "string", "minLength": 1, "maxLength": 500 },
+        "mp3Price": { "type": "number" },
+        "wavPrice": { "type": "number" },
+        "stemsPrice": { "type": "number" },
+        "exclusivePrice": { "type": "number" },
+        "plays": { "type": "number" },
+        "published": { "type": "boolean" },
+        "producerUid": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "title",
+        "genre",
+        "bpm",
+        "musicalKey",
+        "durationSec",
+        "mood",
+        "coverUrl",
+        "audioUrl",
+        "mp3Price",
+        "wavPrice",
+        "stemsPrice",
+        "exclusivePrice",
+        "plays",
+        "published",
+        "producerUid",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "A beat license purchase placed by a client.",
+      "type": "object",
+      "properties": {
+        "buyerUid": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "buyerName": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "buyerEmail": { "type": "string", "minLength": 3, "maxLength": 150 },
+        "paymentMethod": { "type": "string", "enum": ["mastercard", "mtn_momo"] },
+        "paymentReference": { "type": "string", "minLength": 4, "maxLength": 80 },
+        "totalAmount": { "type": "number" },
+        "currency": { "type": "string", "enum": ["USD", "GHS"] },
+        "status": { "type": "string", "enum": ["pending", "completed"] },
+        "itemCount": { "type": "number" },
+        "itemsPreview": { "type": "string", "minLength": 1, "maxLength": 500 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "buyerUid",
+        "buyerName",
+        "buyerEmail",
+        "paymentMethod",
+        "paymentReference",
+        "totalAmount",
+        "currency",
+        "status",
+        "itemCount",
+        "itemsPreview",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "OrderItem": {
+      "title": "OrderItem",
+      "description": "An individual licensed beat inside a client order.",
+      "type": "object",
+      "properties": {
+        "orderId": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "buyerUid": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "beatId": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "beatTitle": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "licenseTier": {
+          "type": "string",
+          "enum": ["mp3", "wav", "stems", "exclusive"]
+        },
+        "price": { "type": "number" },
+        "licenseCode": { "type": "string", "minLength": 4, "maxLength": 64 },
+        "audioUrl": { "type": "string", "minLength": 1, "maxLength": 500 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "orderId",
+        "buyerUid",
+        "beatId",
+        "beatTitle",
+        "licenseTier",
+        "price",
+        "licenseCode",
+        "audioUrl",
+        "createdAt"
+      ]
+    },
+    "PayoutConfig": {
+      "title": "PayoutConfig",
+      "description": "Producer payout destination configuration for Bank MasterCard or MTN Mobile Money.",
+      "type": "object",
+      "properties": {
+        "methodType": { "type": "string", "enum": ["bank_mastercard", "mtn_momo"] },
+        "accountLabel": { "type": "string", "minLength": 2, "maxLength": 100 },
+        "accountHolderName": { "type": "string", "minLength": 2, "maxLength": 100 },
+        "institutionOrNetwork": { "type": "string", "minLength": 2, "maxLength": 80 },
+        "maskedIdentifier": { "type": "string", "minLength": 4, "maxLength": 64 },
+        "currency": { "type": "string", "enum": ["USD", "GHS"] },
+        "country": { "type": "string", "minLength": 2, "maxLength": 60 },
+        "isDefault": { "type": "boolean" },
+        "ownerUid": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "methodType",
+        "accountLabel",
+        "accountHolderName",
+        "institutionOrNetwork",
+        "maskedIdentifier",
+        "currency",
+        "country",
+        "isDefault",
+        "ownerUid",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "PayoutRequest": {
+      "title": "PayoutRequest",
+      "description": "A producer payout withdrawal request to Bank MasterCard or MTN Mobile Money.",
+      "type": "object",
+      "properties": {
+        "ownerUid": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "methodType": { "type": "string", "enum": ["bank_mastercard", "mtn_momo"] },
+        "destinationSummary": { "type": "string", "minLength": 4, "maxLength": 120 },
+        "amountUsd": { "type": "number" },
+        "currency": { "type": "string", "enum": ["USD", "GHS"] },
+        "referenceCode": { "type": "string", "minLength": 4, "maxLength": 80 },
+        "status": { "type": "string", "enum": ["processing", "settled"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "ownerUid",
+        "methodType",
+        "destinationSummary",
+        "amountUsd",
+        "currency",
+        "referenceCode",
+        "status",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Authenticated user profile with isolated PII.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "displayName": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "email": { "type": "string", "minLength": 3, "maxLength": 150 },
+        "role": { "type": "string", "enum": ["buyer"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "displayName", "email", "role", "createdAt", "updatedAt"]
+    },
+    "AdminRecord": {
+      "title": "AdminRecord",
+      "description": "Server-provisioned admin allowlist entry.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "pattern": "^[a-zA-Z0-9_\\-]+$", "maxLength": 128 },
+        "email": { "type": "string", "maxLength": 150 }
+      },
+      "required": ["uid", "email"]
+    }
+  },
+  "firestore": {
+    "/beats/{beatId}": {
+      "schema": { "$ref": "#/entities/Beat" },
+      "description": "Public beat catalog for Exvis Beatz; writable only by Producer Admin."
+    },
+    "/orders/{orderId}": {
+      "schema": { "$ref": "#/entities/Order" },
+      "description": "Client license purchase orders, readable only by buyer or Producer Admin."
+    },
+    "/orders/{orderId}/items/{itemId}": {
+      "schema": { "$ref": "#/entities/OrderItem" },
+      "description": "Itemized licensed beats inside an order."
+    },
+    "/payoutConfigs/{configId}": {
+      "schema": { "$ref": "#/entities/PayoutConfig" },
+      "description": "Producer payout destinations (Bank MasterCard and MTN Mobile Money)."
+    },
+    "/payoutRequests/{payoutId}": {
+      "schema": { "$ref": "#/entities/PayoutRequest" },
+      "description": "Producer withdrawal history and payout settlement requests."
+    },
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "User profiles containing PII, readable only by owner or Producer Admin."
+    },
+    "/admins/{adminId}": {
+      "schema": { "$ref": "#/entities/AdminRecord" },
+      "description": "Trusted Producer Admin registry."
+    }
+  }
+}

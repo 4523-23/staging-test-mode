@@ -1,0 +1,301 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 1. Global Safety Net (Default Deny)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // 2. Global Hardened Primitives
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isVerifiedUser() && (
+        request.auth.token.email == 'enockgyamfi614@gmail.com' ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    // 3. Entity Validation Blueprints
+    function isValidBeat(data) {
+      return data.keys().hasAll([
+        'title', 'genre', 'bpm', 'musicalKey', 'durationSec', 'mood',
+        'coverUrl', 'audioUrl', 'mp3Price', 'wavPrice', 'stemsPrice',
+        'exclusivePrice', 'plays', 'published', 'producerUid', 'createdAt', 'updatedAt'
+      ])
+      && data.keys().hasOnly([
+        'title', 'genre', 'bpm', 'musicalKey', 'durationSec', 'mood',
+        'coverUrl', 'audioUrl', 'mp3Price', 'wavPrice', 'stemsPrice',
+        'exclusivePrice', 'plays', 'published', 'producerUid', 'createdAt', 'updatedAt'
+      ])
+      && data.title is string && data.title.size() >= 2 && data.title.size() <= 100
+      && data.genre is string && data.genre in ['Afrobeats', 'Amapiano', 'Trap', 'Drill', 'UK Drill', 'Hip-Hop', 'R&B', 'Dancehall']
+      && data.bpm is number && data.bpm >= 40 && data.bpm <= 240
+      && data.musicalKey is string && data.musicalKey.size() >= 1 && data.musicalKey.size() <= 16
+      && data.durationSec is number && data.durationSec >= 10 && data.durationSec <= 1200
+      && data.mood is string && data.mood.size() >= 2 && data.mood.size() <= 80
+      && data.coverUrl is string && data.coverUrl.size() >= 1 && data.coverUrl.size() <= 500
+      && data.audioUrl is string && data.audioUrl.size() >= 1 && data.audioUrl.size() <= 500
+      && data.mp3Price is number && data.mp3Price > 0 && data.mp3Price <= 10000
+      && data.wavPrice is number && data.wavPrice > 0 && data.wavPrice <= 10000
+      && data.stemsPrice is number && data.stemsPrice > 0 && data.stemsPrice <= 20000
+      && data.exclusivePrice is number && data.exclusivePrice > 0 && data.exclusivePrice <= 100000
+      && data.plays is number && data.plays >= 0
+      && data.published is bool
+      && isValidId(data.producerUid)
+      && data.createdAt is timestamp
+      && data.updatedAt is timestamp;
+    }
+
+    function isValidOrder(data) {
+      return data.keys().hasAll([
+        'buyerUid', 'buyerName', 'buyerEmail', 'paymentMethod', 'paymentReference',
+        'totalAmount', 'currency', 'status', 'itemCount', 'itemsPreview', 'createdAt', 'updatedAt'
+      ])
+      && data.keys().hasOnly([
+        'buyerUid', 'buyerName', 'buyerEmail', 'paymentMethod', 'paymentReference',
+        'totalAmount', 'currency', 'status', 'itemCount', 'itemsPreview', 'createdAt', 'updatedAt'
+      ])
+      && isValidId(data.buyerUid)
+      && data.buyerName is string && data.buyerName.size() >= 1 && data.buyerName.size() <= 100
+      && data.buyerEmail is string && data.buyerEmail.size() >= 3 && data.buyerEmail.size() <= 150
+      && data.paymentMethod is string && data.paymentMethod in ['mastercard', 'mtn_momo']
+      && data.paymentReference is string && data.paymentReference.size() >= 4 && data.paymentReference.size() <= 80
+      && data.totalAmount is number && data.totalAmount > 0 && data.totalAmount <= 200000
+      && data.currency is string && data.currency in ['USD', 'GHS']
+      && data.status is string && data.status in ['pending', 'completed']
+      && data.itemCount is number && data.itemCount >= 1 && data.itemCount <= 50
+      && data.itemsPreview is string && data.itemsPreview.size() >= 1 && data.itemsPreview.size() <= 500
+      && data.createdAt is timestamp
+      && data.updatedAt is timestamp;
+    }
+
+    function isValidOrderItem(data) {
+      return data.keys().hasAll([
+        'orderId', 'buyerUid', 'beatId', 'beatTitle', 'licenseTier',
+        'price', 'licenseCode', 'audioUrl', 'createdAt'
+      ])
+      && data.keys().hasOnly([
+        'orderId', 'buyerUid', 'beatId', 'beatTitle', 'licenseTier',
+        'price', 'licenseCode', 'audioUrl', 'createdAt'
+      ])
+      && isValidId(data.orderId)
+      && isValidId(data.buyerUid)
+      && isValidId(data.beatId)
+      && data.beatTitle is string && data.beatTitle.size() >= 1 && data.beatTitle.size() <= 100
+      && data.licenseTier is string && data.licenseTier in ['mp3', 'wav', 'stems', 'exclusive']
+      && data.price is number && data.price > 0 && data.price <= 100000
+      && data.licenseCode is string && data.licenseCode.size() >= 4 && data.licenseCode.size() <= 64
+      && data.audioUrl is string && data.audioUrl.size() >= 1 && data.audioUrl.size() <= 500
+      && data.createdAt is timestamp;
+    }
+
+    function isValidPayoutConfig(data) {
+      return data.keys().hasAll([
+        'methodType', 'accountLabel', 'accountHolderName', 'institutionOrNetwork',
+        'maskedIdentifier', 'currency', 'country', 'isDefault', 'ownerUid', 'createdAt', 'updatedAt'
+      ])
+      && data.keys().hasOnly([
+        'methodType', 'accountLabel', 'accountHolderName', 'institutionOrNetwork',
+        'maskedIdentifier', 'currency', 'country', 'isDefault', 'ownerUid', 'createdAt', 'updatedAt'
+      ])
+      && data.methodType is string && data.methodType in ['bank_mastercard', 'mtn_momo']
+      && data.accountLabel is string && data.accountLabel.size() >= 2 && data.accountLabel.size() <= 100
+      && data.accountHolderName is string && data.accountHolderName.size() >= 2 && data.accountHolderName.size() <= 100
+      && data.institutionOrNetwork is string && data.institutionOrNetwork.size() >= 2 && data.institutionOrNetwork.size() <= 80
+      && data.maskedIdentifier is string && data.maskedIdentifier.size() >= 4 && data.maskedIdentifier.size() <= 64
+      && data.currency is string && data.currency in ['USD', 'GHS']
+      && data.country is string && data.country.size() >= 2 && data.country.size() <= 60
+      && data.isDefault is bool
+      && isValidId(data.ownerUid)
+      && data.createdAt is timestamp
+      && data.updatedAt is timestamp;
+    }
+
+    function isValidPayoutRequest(data) {
+      return data.keys().hasAll([
+        'ownerUid', 'methodType', 'destinationSummary', 'amountUsd',
+        'currency', 'referenceCode', 'status', 'createdAt', 'updatedAt'
+      ])
+      && data.keys().hasOnly([
+        'ownerUid', 'methodType', 'destinationSummary', 'amountUsd',
+        'currency', 'referenceCode', 'status', 'createdAt', 'updatedAt'
+      ])
+      && isValidId(data.ownerUid)
+      && data.methodType is string && data.methodType in ['bank_mastercard', 'mtn_momo']
+      && data.destinationSummary is string && data.destinationSummary.size() >= 4 && data.destinationSummary.size() <= 120
+      && data.amountUsd is number && data.amountUsd > 0 && data.amountUsd <= 1000000
+      && data.currency is string && data.currency in ['USD', 'GHS']
+      && data.referenceCode is string && data.referenceCode.size() >= 4 && data.referenceCode.size() <= 80
+      && data.status is string && data.status in ['processing', 'settled']
+      && data.createdAt is timestamp
+      && data.updatedAt is timestamp;
+    }
+
+    function isValidUserProfile(data) {
+      return data.keys().hasAll(['uid', 'displayName', 'email', 'role', 'createdAt', 'updatedAt'])
+      && data.keys().hasOnly(['uid', 'displayName', 'email', 'role', 'createdAt', 'updatedAt'])
+      && isValidId(data.uid)
+      && data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 100
+      && data.email is string && data.email.size() >= 3 && data.email.size() <= 150
+      && data.role == 'buyer'
+      && data.createdAt is timestamp
+      && data.updatedAt is timestamp;
+    }
+
+    // 4. Collection Match Blocks
+    match /beats/{beatId} {
+      allow get: if isValidId(beatId) && (existing().published == true || isAdmin());
+      allow list: if existing().published == true || isAdmin();
+      allow create: if isAdmin()
+        && isValidId(beatId)
+        && isValidBeat(incoming())
+        && incoming().producerUid == request.auth.uid
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isAdmin()
+        && isValidId(beatId)
+        && isValidBeat(incoming())
+        && incoming().producerUid == existing().producerUid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'title', 'genre', 'bpm', 'musicalKey', 'durationSec', 'mood',
+          'coverUrl', 'audioUrl', 'mp3Price', 'wavPrice', 'stemsPrice',
+          'exclusivePrice', 'plays', 'published', 'updatedAt'
+        ]);
+      allow delete: if isAdmin() && isValidId(beatId);
+    }
+
+    match /orders/{orderId} {
+      allow get: if isValidId(orderId) && isVerifiedUser() && (existing().buyerUid == request.auth.uid || isAdmin());
+      allow list: if isVerifiedUser() && (existing().buyerUid == request.auth.uid || isAdmin());
+      allow create: if isVerifiedUser()
+        && isValidId(orderId)
+        && isValidOrder(incoming())
+        && incoming().buyerUid == request.auth.uid
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isAdmin()
+        && isValidId(orderId)
+        && isValidOrder(incoming())
+        && incoming().buyerUid == existing().buyerUid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (existing().status != 'completed' || isAdmin())
+        && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt']);
+      allow delete: if isAdmin() && isValidId(orderId);
+
+      match /items/{itemId} {
+        allow get: if isValidId(orderId) && isValidId(itemId) && isVerifiedUser()
+          && (
+            get(/databases/$(database)/documents/orders/$(orderId)).data.buyerUid == request.auth.uid ||
+            isAdmin()
+          );
+        allow list: if isValidId(orderId) && isVerifiedUser()
+          && (existing().buyerUid == request.auth.uid || isAdmin());
+        allow create: if isValidId(orderId) && isValidId(itemId) && isVerifiedUser()
+          && isValidOrderItem(incoming())
+          && incoming().orderId == orderId
+          && incoming().buyerUid == request.auth.uid
+          && incoming().createdAt == request.time
+          && existsAfter(/databases/$(database)/documents/orders/$(orderId))
+          && getAfter(/databases/$(database)/documents/orders/$(orderId)).data.buyerUid == request.auth.uid;
+        allow update: if false;
+        allow delete: if isAdmin() && isValidId(orderId) && isValidId(itemId);
+      }
+    }
+
+    match /payoutConfigs/{configId} {
+      allow get: if isValidId(configId) && isAdmin();
+      allow list: if isAdmin();
+      allow create: if isAdmin()
+        && isValidId(configId)
+        && isValidPayoutConfig(incoming())
+        && incoming().ownerUid == request.auth.uid
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isAdmin()
+        && isValidId(configId)
+        && isValidPayoutConfig(incoming())
+        && incoming().ownerUid == existing().ownerUid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'methodType', 'accountLabel', 'accountHolderName', 'institutionOrNetwork',
+          'maskedIdentifier', 'currency', 'country', 'isDefault', 'updatedAt'
+        ]);
+      allow delete: if isAdmin() && isValidId(configId);
+    }
+
+    match /payoutRequests/{payoutId} {
+      allow get: if isValidId(payoutId) && isAdmin();
+      allow list: if isAdmin();
+      allow create: if isAdmin()
+        && isValidId(payoutId)
+        && isValidPayoutRequest(incoming())
+        && incoming().ownerUid == request.auth.uid
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isAdmin()
+        && isValidId(payoutId)
+        && isValidPayoutRequest(incoming())
+        && incoming().ownerUid == existing().ownerUid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt']);
+      allow delete: if isAdmin() && isValidId(payoutId);
+    }
+
+    match /users/{userId} {
+      allow get: if isValidId(userId) && isVerifiedUser() && (isOwner(userId) || isAdmin());
+      allow list: if isAdmin();
+      allow create: if isVerifiedUser()
+        && isValidId(userId)
+        && isOwner(userId)
+        && isValidUserProfile(incoming())
+        && incoming().uid == request.auth.uid
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isVerifiedUser()
+        && isValidId(userId)
+        && isValidUserProfile(incoming())
+        && incoming().uid == existing().uid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          isAdmin() ||
+          (isOwner(userId) && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'updatedAt']))
+        );
+      allow delete: if isAdmin() && isValidId(userId);
+    }
+
+    match /admins/{adminId} {
+      allow get: if isValidId(adminId) && isVerifiedUser() && isOwner(adminId);
+      allow list: if false;
+      allow write: if false;
+    }
+  }
+}

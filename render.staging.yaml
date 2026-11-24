@@ -1,0 +1,56 @@
+services:
+  - type: web
+    name: exvis-beatz-staging
+    runtime: node
+    plan: starter
+    region: frankfurt
+    buildCommand: npm install --include=dev && npm run build
+    startCommand: NODE_ENV=production node server.ts
+    healthCheckPath: /api/health
+    disk:
+      name: exvis-beatz-staging-storage
+      mountPath: /var/data
+      sizeGB: 5
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: "22.23.2"
+      - key: FORCE_HTTPS
+        value: "true"
+      - key: APP_ENV
+        value: staging
+      - key: VITE_APP_ENV
+        value: staging
+      - key: APP_URL
+        value: https://exvis-beatz-staging.onrender.com
+      - key: PERSISTENT_STORAGE_DIR
+        value: /var/data
+      - key: PAYSTACK_SECRET_KEY
+        sync: false
+      - key: PAYSTACK_SUBACCOUNT_CODE
+        sync: false
+      - key: FIREBASE_PROJECT_ID
+        sync: false
+      - key: FIREBASE_APP_ID
+        sync: false
+      - key: FIREBASE_API_KEY
+        sync: false
+      - key: FIREBASE_AUTH_DOMAIN
+        sync: false
+      - key: FIREBASE_STORAGE_BUCKET
+        sync: false
+      - key: FIREBASE_MESSAGING_SENDER_ID
+        sync: false
+      - key: FIREBASE_DATABASE_ID
+        value: "(default)"
+      - key: SMTP_HOST
+        value: smtp.gmail.com
+      - key: SMTP_PORT
+        value: "465"
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: SMTP_FROM
+        value: "Exvis Beatz Staging <enockgyamfi614@gmail.com>"

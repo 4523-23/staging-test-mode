@@ -1,0 +1,6 @@
+{
+  "name": "Exvis Beatz",
+  "description": "Music production storefront and instant beat licensing studio by Exvis Beatz, supporting Mastercard and MTN Mobile Money checkout and producer payouts.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
